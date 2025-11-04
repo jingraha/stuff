@@ -1,0 +1,1398 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Daily Activity Calendar</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        h1 {
+            color: #667eea;
+            margin-bottom: 10px;
+            font-size: 2.5em;
+            text-align: center;
+        }
+
+        .month-header {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 1.2em;
+        }
+
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 15px;
+            margin-bottom: 40px;
+        }
+
+        .calendar-day {
+            aspect-ratio: 1;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 3px solid transparent;
+            position: relative;
+            font-weight: 600;
+            font-size: 1.2em;
+            color: #333;
+        }
+
+        .calendar-day:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4);
+            border-color: #667eea;
+        }
+
+        .calendar-day.completed {
+            background: linear-gradient(135deg, #2ed573 0%, #26c65f 100%);
+            color: white;
+        }
+
+        .calendar-day.today {
+            border-color: #ff6b6b;
+            border-width: 4px;
+        }
+
+        .calendar-day-number {
+            font-size: 1.5em;
+            margin-bottom: 5px;
+        }
+
+        .calendar-day-indicator {
+            font-size: 0.8em;
+            opacity: 0.8;
+        }
+
+        .day-content {
+            display: none;
+            margin-top: 30px;
+            padding: 30px;
+            background: #f8f9fa;
+            border-radius: 15px;
+            animation: fadeIn 0.5s ease;
+        }
+
+        .day-content.active {
+            display: block;
+        }
+
+        .day-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #e0e0e0;
+        }
+
+        .day-title {
+            font-size: 1.8em;
+            color: #667eea;
+            font-weight: 600;
+        }
+
+        .close-btn {
+            background: #ff4757;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.9em;
+            transition: background 0.3s;
+        }
+
+        .close-btn:hover {
+            background: #ee3542;
+        }
+
+        .activity-display {
+            padding: 25px;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            border-radius: 15px;
+            font-size: 1.3em;
+            color: #333;
+            font-weight: 500;
+            line-height: 1.6;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        .interactive-tool {
+            margin-top: 20px;
+            padding: 30px;
+            background: white;
+            border-radius: 15px;
+            text-align: left;
+        }
+
+        .interactive-tool h2 {
+            color: #667eea;
+            margin-bottom: 20px;
+            text-align: center;
+            font-size: 1.5em;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 600;
+        }
+
+        .form-group input,
+        .form-group textarea,
+        .form-group select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1em;
+            font-family: inherit;
+            transition: border-color 0.3s;
+        }
+
+        .form-group input:focus,
+        .form-group textarea:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .form-group textarea {
+            min-height: 120px;
+            resize: vertical;
+        }
+
+        .btn-add {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.9em;
+            margin-top: 10px;
+            transition: background 0.3s;
+        }
+
+        .btn-add:hover {
+            background: #5568d3;
+        }
+
+        .timeline-item,
+        .budget-item,
+        .goal-item,
+        .habit-item,
+        .meal-item,
+        .routine-item,
+        .plan-item {
+            background: #f8f9fa;
+            padding: 15px;
+            margin-bottom: 15px;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        .timeline-item-header,
+        .budget-item-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            font-weight: 600;
+            color: #667eea;
+        }
+
+        .timeline-item-details,
+        .budget-item-details {
+            color: #666;
+            font-size: 0.9em;
+        }
+
+        .btn-remove {
+            background: #ff4757;
+            color: white;
+            border: none;
+            padding: 5px 12px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.8em;
+        }
+
+        .btn-remove:hover {
+            background: #ee3542;
+        }
+
+        .totals {
+            margin-top: 20px;
+            padding: 15px;
+            background: white;
+            border-radius: 8px;
+            font-weight: 600;
+            text-align: center;
+        }
+
+        .goal-list,
+        .habit-list,
+        .meal-list,
+        .routine-list,
+        .plan-list {
+            margin-top: 20px;
+        }
+
+        .goal-item input[type="checkbox"] {
+            width: auto;
+            margin-right: 10px;
+        }
+
+        .habit-tracker {
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .habit-header {
+            font-weight: 600;
+            padding: 10px;
+            background: #667eea;
+            color: white;
+            border-radius: 5px;
+            text-align: center;
+        }
+
+        .habit-day {
+            text-align: center;
+            font-size: 0.9em;
+        }
+
+        .habit-checkbox {
+            width: 30px;
+            height: 30px;
+            margin: 0 auto;
+            cursor: pointer;
+        }
+
+        .save-btn {
+            background: #2ed573;
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1em;
+            margin-top: 20px;
+            transition: background 0.3s;
+            width: 100%;
+        }
+
+        .save-btn:hover {
+            background: #26c65f;
+        }
+
+        .saved-message {
+            margin-top: 15px;
+            padding: 10px;
+            background: #d4edda;
+            color: #155724;
+            border-radius: 5px;
+            display: none;
+            text-align: center;
+        }
+
+        .saved-message.show {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .empty-day {
+            background: #f0f0f0;
+            cursor: default;
+        }
+
+        .empty-day:hover {
+            transform: none;
+            box-shadow: none;
+            border-color: transparent;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎄 Daily Activity Calendar</h1>
+        <div class="month-header" id="monthHeader"></div>
+        <div class="calendar-grid" id="calendarGrid"></div>
+        <div class="day-content" id="dayContent">
+            <div class="day-header">
+                <div class="day-title" id="dayTitle">Day 1</div>
+                <button class="close-btn" onclick="closeDayContent()">Close</button>
+            </div>
+            <div class="activity-display" id="activityDisplay"></div>
+            <div id="interactiveTools"></div>
+        </div>
+    </div>
+
+    <script>
+        const activities = [
+            { text: "💰 Create a monthly budget and track your spending categories", type: "budget" },
+            { text: "📝 Write a thoughtful letter to someone you care about", type: "letter" },
+            { text: "🎯 Plan a small weekend trip or day outing with details", type: "trip" },
+            { text: "📋 Design your ideal morning or evening routine", type: "routine" },
+            { text: "💭 Write a reflection on a recent meaningful experience", type: "reflection" },
+            { text: "🎨 Create a vision board or goal list for the next 3 months", type: "goals" },
+            { text: "📚 Plan your meals for the upcoming week", type: "meals" },
+            { text: "✍️ Write your personal manifesto or core values list", type: "manifesto" },
+            { text: "🏠 Design a room or space reorganization plan", type: "reorganization" },
+            { text: "📖 Write a short creative story or vignette", type: "story" },
+            { text: "🎵 Create an intentional playlist for a specific mood or purpose", type: "playlist" },
+            { text: "📅 Plan a meaningful gift or gesture for someone special", type: "gift" },
+            { text: "🌱 Create a personal development plan for one area of growth", type: "development" },
+            { text: "💫 Write down your dreams and aspirations in detail", type: "dreams" },
+            { text: "🧘 Design a gratitude practice routine that works for you", type: "gratitude" },
+            { text: "📝 Write affirmations tailored to your current goals", type: "affirmations" },
+            { text: "🎯 Create a timeline for a personal project you want to start", type: "timeline" },
+            { text: "📚 Research and plan one skill you want to learn this month", type: "skill" },
+            { text: "💌 Plan how you'll express appreciation to important people", type: "appreciation" },
+            { text: "🎨 Design a creative project concept and write the first steps", type: "project" },
+            { text: "📊 Review and organize your digital photos with intention", type: "photos" },
+            { text: "🌿 Plan a mindful self-care routine for the week", type: "selfcare" },
+            { text: "✍️ Write a letter to your future self", type: "futureletter" },
+            { text: "🎯 Create a list of small wins you want to celebrate", type: "wins" },
+            { text: "📝 Reflect on what you've learned recently and write insights", type: "insights" },
+            { text: "🏡 Design a small home improvement project plan", type: "homeimprovement" },
+            { text: "💭 Map out your ideal work-life balance structure", type: "balance" },
+            { text: "📚 Plan a reading list for a topic you want to explore", type: "reading" },
+            { text: "🎨 Create a mood board for a creative endeavor", type: "moodboard" },
+            { text: "📋 Write down your boundaries and how to honor them", type: "boundaries" },
+            { text: "🌱 Plan a small garden or plant project", type: "garden" },
+            { text: "💡 Brainstorm solutions to a current challenge you're facing", type: "brainstorm" },
+            { text: "📝 Write a detailed review of a book, movie, or experience", type: "review" },
+            { text: "🎯 Create a habit tracker system for something meaningful", type: "habit" },
+            { text: "💭 Plan intentional moments of connection for the week", type: "connection" },
+            { text: "📚 Design a learning plan for a new hobby or interest", type: "learning" },
+            { text: "🎨 Write a detailed description of your ideal day", type: "idealday" },
+            { text: "📋 Create a decluttering plan for a specific area", type: "declutter" },
+            { text: "💫 Map out your personal growth journey so far", type: "growth" },
+            { text: "🎯 Plan a small celebration or reward for yourself", type: "celebration" }
+        ];
+
+        let currentDay = null;
+        const today = new Date();
+        const currentMonth = today.getMonth();
+        const currentYear = today.getFullYear();
+        const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+        const firstDayOfMonth = new Date(currentYear, currentMonth, 1).getDay();
+
+        // Initialize calendar
+        function initCalendar() {
+            const monthHeader = document.getElementById('monthHeader');
+            const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 
+                               'July', 'August', 'September', 'October', 'November', 'December'];
+            monthHeader.textContent = `${monthNames[currentMonth]} ${currentYear}`;
+
+            const calendarGrid = document.getElementById('calendarGrid');
+            calendarGrid.innerHTML = '';
+
+            // Add empty cells for days before the first day of the month
+            for (let i = 0; i < firstDayOfMonth; i++) {
+                const emptyDay = document.createElement('div');
+                emptyDay.className = 'calendar-day empty-day';
+                calendarGrid.appendChild(emptyDay);
+            }
+
+            // Add days of the month
+            for (let day = 1; day <= daysInMonth; day++) {
+                const dayElement = document.createElement('div');
+                dayElement.className = 'calendar-day';
+                const dayDate = new Date(currentYear, currentMonth, day);
+                
+                if (dayDate.toDateString() === today.toDateString()) {
+                    dayElement.classList.add('today');
+                }
+
+                const dayData = getDayData(day);
+                if (dayData && dayData.completed) {
+                    dayElement.classList.add('completed');
+                }
+
+                dayElement.innerHTML = `
+                    <div class="calendar-day-number">${day}</div>
+                    <div class="calendar-day-indicator">${dayData && dayData.completed ? '✓' : '📅'}</div>
+                `;
+
+                dayElement.onclick = () => openDay(day);
+                calendarGrid.appendChild(dayElement);
+            }
+        }
+
+        function getDayData(day) {
+            const key = `day_${currentYear}_${currentMonth}_${day}`;
+            const data = localStorage.getItem(key);
+            return data ? JSON.parse(data) : null;
+        }
+
+        function saveDayData(day, activityIndex, activityType, data) {
+            const key = `day_${currentYear}_${currentMonth}_${day}`;
+            const dayData = {
+                activityIndex,
+                activityType,
+                data,
+                completed: data !== null,
+                date: new Date().toISOString()
+            };
+            localStorage.setItem(key, JSON.stringify(dayData));
+            updateDayIndicator(day);
+        }
+
+        function getDayActivity(day) {
+            const dayData = getDayData(day);
+            if (dayData) {
+                return dayData.activityIndex;
+            }
+            // Assign activity based on day (consistent for same day)
+            return day % activities.length;
+        }
+
+        function openDay(day) {
+            currentDay = day;
+            const activityIndex = getDayActivity(day);
+            const activity = activities[activityIndex];
+            const dayData = getDayData(day);
+
+            document.getElementById('dayTitle').textContent = `Day ${day}`;
+            document.getElementById('activityDisplay').textContent = activity.text;
+            document.getElementById('dayContent').classList.add('active');
+
+            // Show interactive tool and load saved data if exists
+            showInteractiveTool(activity.type, dayData ? dayData.data : null);
+        }
+
+        function closeDayContent() {
+            document.getElementById('dayContent').classList.remove('active');
+            currentDay = null;
+        }
+
+        function updateDayIndicator(day) {
+            const dayData = getDayData(day);
+            const dayElements = document.querySelectorAll('.calendar-day');
+            const dayIndex = firstDayOfMonth + day - 1;
+            if (dayElements[dayIndex] && !dayElements[dayIndex].classList.contains('empty-day')) {
+                if (dayData && dayData.completed) {
+                    dayElements[dayIndex].classList.add('completed');
+                    dayElements[dayIndex].querySelector('.calendar-day-indicator').textContent = '✓';
+                } else {
+                    dayElements[dayIndex].classList.remove('completed');
+                    dayElements[dayIndex].querySelector('.calendar-day-indicator').textContent = '📅';
+                }
+            }
+        }
+
+        function showInteractiveTool(type, savedData) {
+            const toolsContainer = document.getElementById('interactiveTools');
+            toolsContainer.innerHTML = '';
+
+            let toolHTML = '';
+            switch(type) {
+                case 'timeline':
+                    toolHTML = createTimelineTool(savedData);
+                    break;
+                case 'budget':
+                    toolHTML = createBudgetTool(savedData);
+                    break;
+                case 'letter':
+                case 'futureletter':
+                    toolHTML = createLetterTool(savedData);
+                    break;
+                case 'trip':
+                    toolHTML = createTripTool(savedData);
+                    break;
+                case 'routine':
+                case 'selfcare':
+                    toolHTML = createRoutineTool(savedData);
+                    break;
+                case 'reflection':
+                case 'insights':
+                case 'review':
+                    toolHTML = createReflectionTool(savedData);
+                    break;
+                case 'goals':
+                    toolHTML = createGoalsTool(savedData);
+                    break;
+                case 'meals':
+                    toolHTML = createMealsTool(savedData);
+                    break;
+                case 'manifesto':
+                case 'dreams':
+                case 'affirmations':
+                case 'story':
+                case 'idealday':
+                    toolHTML = createWritingTool(savedData);
+                    break;
+                case 'habit':
+                    toolHTML = createHabitTrackerTool(savedData);
+                    break;
+                case 'gift':
+                case 'appreciation':
+                case 'celebration':
+                case 'wins':
+                    toolHTML = createPlanningTool(savedData);
+                    break;
+                case 'development':
+                case 'skill':
+                case 'learning':
+                case 'project':
+                    toolHTML = createDevelopmentTool(savedData);
+                    break;
+                case 'reorganization':
+                case 'homeimprovement':
+                case 'declutter':
+                case 'garden':
+                    toolHTML = createProjectTool(savedData);
+                    break;
+                case 'playlist':
+                    toolHTML = createPlaylistTool(savedData);
+                    break;
+                case 'gratitude':
+                    toolHTML = createGratitudeTool(savedData);
+                    break;
+                case 'balance':
+                case 'connection':
+                case 'reading':
+                case 'moodboard':
+                case 'boundaries':
+                case 'brainstorm':
+                case 'growth':
+                case 'photos':
+                    toolHTML = createGeneralPlanningTool(savedData);
+                    break;
+                default:
+                    toolHTML = createWritingTool(savedData);
+            }
+
+            toolsContainer.innerHTML = toolHTML;
+        }
+
+        function createTimelineTool(savedData) {
+            const data = savedData || { projectName: '', items: [] };
+            const itemsHTML = data.items ? data.items.map((item, idx) => `
+                <div class="timeline-item">
+                    <div class="timeline-item-header">
+                        <span>${item.text}</span>
+                        <button class="btn-remove" onclick="removeTimelineItem(this)">Remove</button>
+                    </div>
+                    <div class="timeline-item-details">${item.date}</div>
+                </div>
+            `).join('') : '';
+
+            return `
+                <div class="interactive-tool">
+                    <h2>📅 Project Timeline</h2>
+                    <div class="form-group">
+                        <label>Project Name:</label>
+                        <input type="text" id="projectName" value="${data.projectName || ''}" placeholder="e.g., Learn Spanish, Start a Blog">
+                    </div>
+                    <div id="timelineItems">${itemsHTML}</div>
+                    <div class="form-group">
+                        <label>Milestone:</label>
+                        <input type="text" id="milestoneText" placeholder="e.g., Complete first lesson">
+                    </div>
+                    <div class="form-group">
+                        <label>Target Date:</label>
+                        <input type="date" id="milestoneDate">
+                    </div>
+                    <button class="btn-add" onclick="addTimelineItem()">Add Milestone</button>
+                    <button class="save-btn" onclick="saveCurrentDay()">Save Timeline</button>
+                    <div class="saved-message" id="saveMessage">Saved!</div>
+                </div>
+            `;
+        }
+
+        function addTimelineItem() {
+            const text = document.getElementById('milestoneText').value;
+            const date = document.getElementById('milestoneDate').value;
+            if (!text || !date) return;
+
+            const itemsContainer = document.getElementById('timelineItems');
+            const item = document.createElement('div');
+            item.className = 'timeline-item';
+            item.innerHTML = `
+                <div class="timeline-item-header">
+                    <span>${text}</span>
+                    <button class="btn-remove" onclick="removeTimelineItem(this)">Remove</button>
+                </div>
+                <div class="timeline-item-details">Target Date: ${new Date(date).toLocaleDateString()}</div>
+            `;
+            itemsContainer.appendChild(item);
+            document.getElementById('milestoneText').value = '';
+            document.getElementById('milestoneDate').value = '';
+        }
+
+        function removeTimelineItem(btn) {
+            btn.closest('.timeline-item').remove();
+        }
+
+        function createBudgetTool(savedData) {
+            const data = savedData || { income: 0, items: [] };
+            const itemsHTML = data.items ? data.items.map(item => `
+                <div class="budget-item">
+                    <div class="budget-item-header">
+                        <span>${item.name}</span>
+                        <span>$${item.amount}</span>
+                        <button class="btn-remove" onclick="removeBudgetItem(this)">Remove</button>
+                    </div>
+                </div>
+            `).join('') : '';
+
+            return `
+                <div class="interactive-tool">
+                    <h2>💰 Monthly Budget</h2>
+                    <div class="form-group">
+                        <label>Monthly Income:</label>
+                        <input type="number" id="monthlyIncome" value="${data.income || ''}" placeholder="Enter your monthly income" onchange="updateBudgetTotals()">
+                    </div>
+                    <h3 style="margin-top: 20px; color: #667eea;">Expense Categories</h3>
+                    <div id="budgetItems">${itemsHTML}</div>
+                    <div class="form-group">
+                        <label>Category Name:</label>
+                        <input type="text" id="categoryName" placeholder="e.g., Groceries, Rent, Entertainment">
+                    </div>
+                    <div class="form-group">
+                        <label>Budgeted Amount:</label>
+                        <input type="number" id="categoryAmount" placeholder="Enter amount" step="0.01">
+                    </div>
+                    <button class="btn-add" onclick="addBudgetItem()">Add Category</button>
+                    <div class="totals" id="budgetTotals">
+                        <div>Total Income: $<span id="totalIncome">${data.income || 0}</span></div>
+                        <div>Total Expenses: $<span id="totalExpenses">0</span></div>
+                        <div>Remaining: $<span id="remaining">${data.income || 0}</span></div>
+                    </div>
+                    <button class="save-btn" onclick="saveCurrentDay()">Save Budget</button>
+                    <div class="saved-message" id="saveMessage">Saved!</div>
+                </div>
+            `;
+        }
+
+        function addBudgetItem() {
+            const name = document.getElementById('categoryName').value;
+            const amount = document.getElementById('categoryAmount').value;
+            if (!name || !amount) return;
+
+            const itemsContainer = document.getElementById('budgetItems');
+            const item = document.createElement('div');
+            item.className = 'budget-item';
+            item.innerHTML = `
+                <div class="budget-item-header">
+                    <span>${name}</span>
+                    <span>$${parseFloat(amount).toFixed(2)}</span>
+                    <button class="btn-remove" onclick="removeBudgetItem(this); updateBudgetTotals();">Remove</button>
+                </div>
+            `;
+            itemsContainer.appendChild(item);
+            document.getElementById('categoryName').value = '';
+            document.getElementById('categoryAmount').value = '';
+            updateBudgetTotals();
+        }
+
+        function removeBudgetItem(btn) {
+            btn.closest('.budget-item').remove();
+        }
+
+        function updateBudgetTotals() {
+            const income = parseFloat(document.getElementById('monthlyIncome')?.value || 0);
+            const items = document.querySelectorAll('#budgetItems .budget-item');
+            let totalExpenses = 0;
+            
+            items.forEach(item => {
+                const amountText = item.querySelector('.budget-item-header span:nth-child(2)').textContent;
+                totalExpenses += parseFloat(amountText.replace('$', ''));
+            });
+
+            const totalIncomeEl = document.getElementById('totalIncome');
+            const totalExpensesEl = document.getElementById('totalExpenses');
+            const remainingEl = document.getElementById('remaining');
+
+            if (totalIncomeEl) totalIncomeEl.textContent = income.toFixed(2);
+            if (totalExpensesEl) totalExpensesEl.textContent = totalExpenses.toFixed(2);
+            if (remainingEl) remainingEl.textContent = (income - totalExpenses).toFixed(2);
+        }
+
+        function createLetterTool(savedData) {
+            const data = savedData || { to: '', content: '' };
+            return `
+                <div class="interactive-tool">
+                    <h2>✍️ Write Your Letter</h2>
+                    <div class="form-group">
+                        <label>To:</label>
+                        <input type="text" id="letterTo" value="${data.to || ''}" placeholder="Recipient's name">
+                    </div>
+                    <div class="form-group">
+                        <label>Your Letter:</label>
+                        <textarea id="letterContent" placeholder="Write your thoughtful letter here...">${data.content || ''}</textarea>
+                    </div>
+                    <button class="save-btn" onclick="saveCurrentDay()">Save Letter</button>
+                    <div class="saved-message" id="saveMessage">Saved!</div>
+                </div>
+            `;
+        }
+
+        function createTripTool(savedData) {
+            const data = savedData || { destination: '', date: '', activities: '', budget: '', packing: '' };
+            return `
+                <div class="interactive-tool">
+                    <h2>✈️ Trip Planning</h2>
+                    <div class="form-group">
+                        <label>Destination:</label>
+                        <input type="text" id="tripDestination" value="${data.destination || ''}" placeholder="Where are you going?">
+                    </div>
+                    <div class="form-group">
+                        <label>Date:</label>
+                        <input type="date" id="tripDate" value="${data.date || ''}">
+                    </div>
+                    <div class="form-group">
+                        <label>Activities & Itinerary:</label>
+                        <textarea id="tripActivities" placeholder="Plan your activities, places to visit, etc.">${data.activities || ''}</textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Budget:</label>
+                        <input type="number" id="tripBudget" value="${data.budget || ''}" placeholder="Estimated budget">
+                    </div>
+                    <div class="form-group">
+                        <label>Things to Pack:</label>
+                        <textarea id="tripPacking" placeholder="List items to pack">${data.packing || ''}</textarea>
+                    </div>
+                    <button class="save-btn" onclick="saveCurrentDay()">Save Trip Plan</button>
+                    <div class="saved-message" id="saveMessage">Saved!</div>
+                </div>
+            `;
+        }
+
+        function createRoutineTool(savedData) {
+            const data = savedData || { name: '', items: [] };
+            const itemsHTML = data.items ? data.items.map(item => `
+                <div class="routine-item">
+                    <div>${item}</div>
+                    <button class="btn-remove" onclick="this.parentElement.remove()" style="margin-top: 10px;">Remove</button>
+                </div>
+            `).join('') : '';
+
+            return `
+                <div class="interactive-tool">
+                    <h2>📋 Design Your Routine</h2>
+                    <div class="form-group">
+                        <label>Routine Name:</label>
+                        <input type="text" id="routineName" value="${data.name || ''}" placeholder="e.g., Morning Routine, Evening Self-Care">
+                    </div>
+                    <div id="routineItems">${itemsHTML}</div>
+                    <div class="form-group">
+                        <label>Activity:</label>
+                        <input type="text" id="routineActivity" placeholder="e.g., Meditate for 10 minutes">
+                    </div>
+                    <div class="form-group">
+                        <label>Time:</label>
+                        <input type="time" id="routineTime">
+                    </div>
+                    <button class="btn-add" onclick="addRoutineItem()">Add Activity</button>
+                    <button class="save-btn" onclick="saveCurrentDay()">Save Routine</button>
+                    <div class="saved-message" id="saveMessage">Saved!</div>
+                </div>
+            `;
+        }
+
+        function addRoutineItem() {
+            const activity = document.getElementById('routineActivity').value;
+            const time = document.getElementById('routineTime').value;
+            if (!activity) return;
+
+            const itemsContainer = document.getElementById('routineItems');
+            const item = document.createElement('div');
+            item.className = 'routine-item';
+            item.innerHTML = `
+                <div><strong>${time || 'No specific time'}</strong> - ${activity}</div>
+                <button class="btn-remove" onclick="this.parentElement.remove()" style="margin-top: 10px;">Remove</button>
+            `;
+            itemsContainer.appendChild(item);
+            document.getElementById('routineActivity').value = '';
+            document.getElementById('routineTime').value = '';
+        }
+
+        function createReflectionTool(savedData) {
+            const data = savedData || { topic: '', content: '' };
+            return `
+                <div class="interactive-tool">
+                    <h2>💭 Write Your Reflection</h2>
+                    <div class="form-group">
+                        <label>Topic/Experience:</label>
+                        <input type="text" id="reflectionTopic" value="${data.topic || ''}" placeholder="What are you reflecting on?">
+                    </div>
+                    <div class="form-group">
+                        <label>Your Reflection:</label>
+                        <textarea id="reflectionContent" placeholder="Write your thoughts, insights, and reflections here..." style="min-height: 200px;">${data.content || ''}</textarea>
+                    </div>
+                    <button class="save-btn" onclick="saveCurrentDay()">Save Reflection</button>
+                    <div class="saved-message" id="saveMessage">Saved!</div>
+                </div>
+            `;
+        }
+
+        function createGoalsTool(savedData) {
+            const data = savedData || { timeframe: '', goals: [] };
+            const goalsHTML = data.goals ? data.goals.map(goal => `
+                <div class="goal-item">
+                    <label style="display: flex; align-items: center;">
+                        <input type="checkbox">
+                        <span style="margin-left: 10px;">${goal}</span>
+                    </label>
+                    <button class="btn-remove" onclick="this.parentElement.remove()" style="margin-top: 10px;">Remove</button>
+                </div>
+            `).join('') : '';
+
+            return `
+                <div class="interactive-tool">
+                    <h2>🎯 Your Goals</h2>
+                    <div class="form-group">
+                        <label>Timeframe:</label>
+                        <input type="text" id="goalsTimeframe" value="${data.timeframe || ''}" placeholder="e.g., Next 3 months, This year">
+                    </div>
+                    <div id="goalItems">${goalsHTML}</div>
+                    <div class="form-group">
+                        <label>Goal:</label>
+                        <input type="text" id="goalText" placeholder="Enter a goal">
+                    </div>
+                    <button class="btn-add" onclick="addGoal()">Add Goal</button>
+                    <button class="save-btn" onclick="saveCurrentDay()">Save Goals</button>
+                    <div class="saved-message" id="saveMessage">Saved!</div>
+                </div>
+            `;
+        }
+
+        function addGoal() {
+            const text = document.getElementById('goalText').value;
+            if (!text) return;
+
+            const itemsContainer = document.getElementById('goalItems');
+            const item = document.createElement('div');
+            item.className = 'goal-item';
+            item.innerHTML = `
+                <label style="display: flex; align-items: center;">
+                    <input type="checkbox">
+                    <span style="margin-left: 10px;">${text}</span>
+                </label>
+                <button class="btn-remove" onclick="this.parentElement.remove()" style="margin-top: 10px;">Remove</button>
+            `;
+            itemsContainer.appendChild(item);
+            document.getElementById('goalText').value = '';
+        }
+
+        function createMealsTool(savedData) {
+            const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+            const data = savedData || {};
+            return `
+                <div class="interactive-tool">
+                    <h2>🍽️ Weekly Meal Plan</h2>
+                    ${days.map(day => `
+                        <div class="form-group">
+                            <label>${day}:</label>
+                            <input type="text" id="meal_${day}" value="${data[day] || ''}" placeholder="Breakfast, Lunch, Dinner">
+                        </div>
+                    `).join('')}
+                    <button class="save-btn" onclick="saveCurrentDay()">Save Meal Plan</button>
+                    <div class="saved-message" id="saveMessage">Saved!</div>
+                </div>
+            `;
+        }
+
+        function createWritingTool(savedData) {
+            const data = savedData || { title: '', content: '' };
+            return `
+                <div class="interactive-tool">
+                    <h2>✍️ Write</h2>
+                    <div class="form-group">
+                        <label>Title:</label>
+                        <input type="text" id="writingTitle" value="${data.title || ''}" placeholder="Give it a title">
+                    </div>
+                    <div class="form-group">
+                        <label>Your Writing:</label>
+                        <textarea id="writingContent" placeholder="Start writing..." style="min-height: 300px;">${data.content || ''}</textarea>
+                    </div>
+                    <button class="save-btn" onclick="saveCurrentDay()">Save</button>
+                    <div class="saved-message" id="saveMessage">Saved!</div>
+                </div>
+            `;
+        }
+
+        function createHabitTrackerTool(savedData) {
+            const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+            const data = savedData || { name: '', checks: [false, false, false, false, false, false, false] };
+            return `
+                <div class="interactive-tool">
+                    <h2>🎯 Habit Tracker</h2>
+                    <div class="form-group">
+                        <label>Habit Name:</label>
+                        <input type="text" id="habitName" value="${data.name || ''}" placeholder="e.g., Exercise, Meditation, Reading" onchange="updateHabitName()">
+                    </div>
+                    <div class="habit-tracker" id="habitTracker">
+                        <div class="habit-header">Habit</div>
+                        ${days.map(day => `<div class="habit-header">${day}</div>`).join('')}
+                        <div id="habitNameDisplay" style="padding: 10px; text-align: left;">${data.name || 'Your Habit'}</div>
+                        ${days.map((day, idx) => `<div class="habit-day"><input type="checkbox" class="habit-checkbox" ${data.checks && data.checks[idx] ? 'checked' : ''}></div>`).join('')}
+                    </div>
+                    <button class="save-btn" onclick="saveCurrentDay()">Save Habit Tracker</button>
+                    <div class="saved-message" id="saveMessage">Saved!</div>
+                </div>
+            `;
+        }
+
+        function updateHabitName() {
+            const nameInput = document.getElementById('habitName');
+            const nameDisplay = document.getElementById('habitNameDisplay');
+            if (nameInput && nameDisplay) {
+                nameDisplay.textContent = nameInput.value || 'Your Habit';
+            }
+        }
+
+        function createPlanningTool(savedData) {
+            const data = savedData || { title: '', items: [], notes: '' };
+            const itemsHTML = data.items ? data.items.map(item => `
+                <div class="plan-item">
+                    <div>${item}</div>
+                    <button class="btn-remove" onclick="this.parentElement.remove()" style="margin-top: 10px;">Remove</button>
+                </div>
+            `).join('') : '';
+
+            return `
+                <div class="interactive-tool">
+                    <h2>📋 Planning</h2>
+                    <div class="form-group">
+                        <label>Title:</label>
+                        <input type="text" id="planTitle" value="${data.title || ''}" placeholder="What are you planning?">
+                    </div>
+                    <div id="planItems">${itemsHTML}</div>
+                    <div class="form-group">
+                        <label>Item:</label>
+                        <input type="text" id="planItem" placeholder="Add an item">
+                    </div>
+                    <button class="btn-add" onclick="addPlanItem()">Add Item</button>
+                    <div class="form-group" style="margin-top: 20px;">
+                        <label>Notes:</label>
+                        <textarea id="planNotes" placeholder="Additional notes">${data.notes || ''}</textarea>
+                    </div>
+                    <button class="save-btn" onclick="saveCurrentDay()">Save Plan</button>
+                    <div class="saved-message" id="saveMessage">Saved!</div>
+                </div>
+            `;
+        }
+
+        function addPlanItem() {
+            const text = document.getElementById('planItem').value;
+            if (!text) return;
+
+            const itemsContainer = document.getElementById('planItems');
+            const item = document.createElement('div');
+            item.className = 'plan-item';
+            item.innerHTML = `
+                <div>${text}</div>
+                <button class="btn-remove" onclick="this.parentElement.remove()" style="margin-top: 10px;">Remove</button>
+            `;
+            itemsContainer.appendChild(item);
+            document.getElementById('planItem').value = '';
+        }
+
+        function createDevelopmentTool(savedData) {
+            const data = savedData || { focus: '', current: '', goal: '', steps: '', resources: '' };
+            return `
+                <div class="interactive-tool">
+                    <h2>🌱 Development Plan</h2>
+                    <div class="form-group">
+                        <label>Focus Area:</label>
+                        <input type="text" id="devFocus" value="${data.focus || ''}" placeholder="What do you want to develop?">
+                    </div>
+                    <div class="form-group">
+                        <label>Current Level:</label>
+                        <textarea id="devCurrent" placeholder="Where are you now?">${data.current || ''}</textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Goal:</label>
+                        <textarea id="devGoal" placeholder="Where do you want to be?">${data.goal || ''}</textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Steps to Get There:</label>
+                        <textarea id="devSteps" placeholder="List the steps you'll take" style="min-height: 150px;">${data.steps || ''}</textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Resources Needed:</label>
+                        <textarea id="devResources" placeholder="Books, courses, tools, etc.">${data.resources || ''}</textarea>
+                    </div>
+                    <button class="save-btn" onclick="saveCurrentDay()">Save Plan</button>
+                    <div class="saved-message" id="saveMessage">Saved!</div>
+                </div>
+            `;
+        }
+
+        function createProjectTool(savedData) {
+            const data = savedData || { name: '', description: '', materials: '', steps: '', timeline: '' };
+            return `
+                <div class="interactive-tool">
+                    <h2>🏠 Project Plan</h2>
+                    <div class="form-group">
+                        <label>Project Name:</label>
+                        <input type="text" id="projectName" value="${data.name || ''}" placeholder="What's the project?">
+                    </div>
+                    <div class="form-group">
+                        <label>Description:</label>
+                        <textarea id="projectDescription" placeholder="Describe the project">${data.description || ''}</textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Materials/Resources Needed:</label>
+                        <textarea id="projectMaterials" placeholder="List what you need">${data.materials || ''}</textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Steps:</label>
+                        <textarea id="projectSteps" placeholder="Outline the steps" style="min-height: 150px;">${data.steps || ''}</textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Timeline:</label>
+                        <input type="text" id="projectTimeline" value="${data.timeline || ''}" placeholder="e.g., 2 weeks, 1 month">
+                    </div>
+                    <button class="save-btn" onclick="saveCurrentDay()">Save Project</button>
+                    <div class="saved-message" id="saveMessage">Saved!</div>
+                </div>
+            `;
+        }
+
+        function createPlaylistTool(savedData) {
+            const data = savedData || { name: '', mood: '', songs: [] };
+            const songsHTML = data.songs ? data.songs.map(song => `
+                <div class="plan-item">
+                    <div>${song}</div>
+                    <button class="btn-remove" onclick="this.parentElement.remove()" style="margin-top: 10px;">Remove</button>
+                </div>
+            `).join('') : '';
+
+            return `
+                <div class="interactive-tool">
+                    <h2>🎵 Playlist Creator</h2>
+                    <div class="form-group">
+                        <label>Playlist Name:</label>
+                        <input type="text" id="playlistName" value="${data.name || ''}" placeholder="e.g., Focus Music, Workout Vibes">
+                    </div>
+                    <div class="form-group">
+                        <label>Purpose/Mood:</label>
+                        <input type="text" id="playlistMood" value="${data.mood || ''}" placeholder="What's this playlist for?">
+                    </div>
+                    <div id="playlistItems">${songsHTML}</div>
+                    <div class="form-group">
+                        <label>Song:</label>
+                        <input type="text" id="playlistSong" placeholder="Artist - Song Title">
+                    </div>
+                    <button class="btn-add" onclick="addPlaylistItem()">Add Song</button>
+                    <button class="save-btn" onclick="saveCurrentDay()">Save Playlist</button>
+                    <div class="saved-message" id="saveMessage">Saved!</div>
+                </div>
+            `;
+        }
+
+        function addPlaylistItem() {
+            const song = document.getElementById('playlistSong').value;
+            if (!song) return;
+
+            const itemsContainer = document.getElementById('playlistItems');
+            const item = document.createElement('div');
+            item.className = 'plan-item';
+            item.innerHTML = `
+                <div>${song}</div>
+                <button class="btn-remove" onclick="this.parentElement.remove()" style="margin-top: 10px;">Remove</button>
+            `;
+            itemsContainer.appendChild(item);
+            document.getElementById('playlistSong').value = '';
+        }
+
+        function createGratitudeTool(savedData) {
+            const data = savedData || { frequency: 'Daily', when: '', method: '', items: [] };
+            const itemsHTML = data.items ? data.items.map(item => `
+                <div class="plan-item">
+                    <div>${item}</div>
+                    <button class="btn-remove" onclick="this.parentElement.remove()" style="margin-top: 10px;">Remove</button>
+                </div>
+            `).join('') : '';
+
+            return `
+                <div class="interactive-tool">
+                    <h2>🧘 Gratitude Practice</h2>
+                    <div class="form-group">
+                        <label>How often will you practice?</label>
+                        <select id="gratitudeFrequency">
+                            <option ${data.frequency === 'Daily' ? 'selected' : ''}>Daily</option>
+                            <option ${data.frequency === 'Weekly' ? 'selected' : ''}>Weekly</option>
+                            <option ${data.frequency === 'Multiple times per week' ? 'selected' : ''}>Multiple times per week</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>When will you do it?</label>
+                        <input type="text" id="gratitudeWhen" value="${data.when || ''}" placeholder="e.g., Every morning, Before bed">
+                    </div>
+                    <div class="form-group">
+                        <label>Method:</label>
+                        <textarea id="gratitudeMethod" placeholder="How will you practice? (journal, meditation, verbal reflection, etc.)">${data.method || ''}</textarea>
+                    </div>
+                    <div id="gratitudeItems">${itemsHTML}</div>
+                    <div class="form-group">
+                        <label>Gratitude Item:</label>
+                        <input type="text" id="gratitudeItem" placeholder="Something you're grateful for">
+                    </div>
+                    <button class="btn-add" onclick="addGratitudeItem()">Add to List</button>
+                    <button class="save-btn" onclick="saveCurrentDay()">Save Practice</button>
+                    <div class="saved-message" id="saveMessage">Saved!</div>
+                </div>
+            `;
+        }
+
+        function addGratitudeItem() {
+            const item = document.getElementById('gratitudeItem').value;
+            if (!item) return;
+
+            const itemsContainer = document.getElementById('gratitudeItems');
+            const listItem = document.createElement('div');
+            listItem.className = 'plan-item';
+            listItem.innerHTML = `
+                <div>${item}</div>
+                <button class="btn-remove" onclick="this.parentElement.remove()" style="margin-top: 10px;">Remove</button>
+            `;
+            itemsContainer.appendChild(listItem);
+            document.getElementById('gratitudeItem').value = '';
+        }
+
+        function createGeneralPlanningTool(savedData) {
+            const data = savedData || { title: '', content: '' };
+            return `
+                <div class="interactive-tool">
+                    <h2>📋 Planning</h2>
+                    <div class="form-group">
+                        <label>Title:</label>
+                        <input type="text" id="generalTitle" value="${data.title || ''}" placeholder="What are you planning?">
+                    </div>
+                    <div class="form-group">
+                        <label>Your Plan:</label>
+                        <textarea id="generalContent" placeholder="Write your plan here..." style="min-height: 300px;">${data.content || ''}</textarea>
+                    </div>
+                    <button class="save-btn" onclick="saveCurrentDay()">Save Plan</button>
+                    <div class="saved-message" id="saveMessage">Saved!</div>
+                </div>
+            `;
+        }
+
+        function saveCurrentDay() {
+            if (!currentDay) return;
+
+            const activityIndex = getDayActivity(currentDay);
+            const activity = activities[activityIndex];
+            let data = null;
+
+            // Collect data based on activity type
+            switch(activity.type) {
+                case 'timeline':
+                    data = {
+                        projectName: document.getElementById('projectName')?.value || '',
+                        items: Array.from(document.querySelectorAll('#timelineItems .timeline-item')).map(item => ({
+                            text: item.querySelector('.timeline-item-header span').textContent,
+                            date: item.querySelector('.timeline-item-details').textContent
+                        }))
+                    };
+                    break;
+                case 'budget':
+                    data = {
+                        income: parseFloat(document.getElementById('monthlyIncome')?.value || 0),
+                        items: Array.from(document.querySelectorAll('#budgetItems .budget-item')).map(item => ({
+                            name: item.querySelector('.budget-item-header span:first-child').textContent,
+                            amount: item.querySelector('.budget-item-header span:nth-child(2)').textContent
+                        }))
+                    };
+                    break;
+                case 'letter':
+                case 'futureletter':
+                    data = {
+                        to: document.getElementById('letterTo')?.value || '',
+                        content: document.getElementById('letterContent')?.value || ''
+                    };
+                    break;
+                case 'trip':
+                    data = {
+                        destination: document.getElementById('tripDestination')?.value || '',
+                        date: document.getElementById('tripDate')?.value || '',
+                        activities: document.getElementById('tripActivities')?.value || '',
+                        budget: document.getElementById('tripBudget')?.value || '',
+                        packing: document.getElementById('tripPacking')?.value || ''
+                    };
+                    break;
+                case 'routine':
+                case 'selfcare':
+                    data = {
+                        name: document.getElementById('routineName')?.value || '',
+                        items: Array.from(document.querySelectorAll('#routineItems .routine-item')).map(item => 
+                            item.querySelector('div').textContent
+                        )
+                    };
+                    break;
+                case 'reflection':
+                case 'insights':
+                case 'review':
+                    data = {
+                        topic: document.getElementById('reflectionTopic')?.value || '',
+                        content: document.getElementById('reflectionContent')?.value || ''
+                    };
+                    break;
+                case 'goals':
+                    data = {
+                        timeframe: document.getElementById('goalsTimeframe')?.value || '',
+                        goals: Array.from(document.querySelectorAll('#goalItems .goal-item')).map(item => 
+                            item.querySelector('span').textContent
+                        )
+                    };
+                    break;
+                case 'meals':
+                    const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+                    data = {};
+                    days.forEach(day => {
+                        const meal = document.getElementById('meal_' + day)?.value || '';
+                        if (meal) data[day] = meal;
+                    });
+                    break;
+                case 'manifesto':
+                case 'dreams':
+                case 'affirmations':
+                case 'story':
+                case 'idealday':
+                    data = {
+                        title: document.getElementById('writingTitle')?.value || '',
+                        content: document.getElementById('writingContent')?.value || ''
+                    };
+                    break;
+                case 'habit':
+                    const habitDays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+                    data = {
+                        name: document.getElementById('habitName')?.value || '',
+                        checks: Array.from(document.querySelectorAll('.habit-checkbox')).map(cb => cb.checked)
+                    };
+                    break;
+                case 'gift':
+                case 'appreciation':
+                case 'celebration':
+                case 'wins':
+                    data = {
+                        title: document.getElementById('planTitle')?.value || '',
+                        items: Array.from(document.querySelectorAll('#planItems .plan-item')).map(item => 
+                            item.querySelector('div').textContent
+                        ),
+                        notes: document.getElementById('planNotes')?.value || ''
+                    };
+                    break;
+                case 'development':
+                case 'skill':
+                case 'learning':
+                case 'project':
+                    data = {
+                        focus: document.getElementById('devFocus')?.value || '',
+                        current: document.getElementById('devCurrent')?.value || '',
+                        goal: document.getElementById('devGoal')?.value || '',
+                        steps: document.getElementById('devSteps')?.value || '',
+                        resources: document.getElementById('devResources')?.value || ''
+                    };
+                    break;
+                case 'reorganization':
+                case 'homeimprovement':
+                case 'declutter':
+                case 'garden':
+                    data = {
+                        name: document.getElementById('projectName')?.value || '',
+                        description: document.getElementById('projectDescription')?.value || '',
+                        materials: document.getElementById('projectMaterials')?.value || '',
+                        steps: document.getElementById('projectSteps')?.value || '',
+                        timeline: document.getElementById('projectTimeline')?.value || ''
+                    };
+                    break;
+                case 'playlist':
+                    data = {
+                        name: document.getElementById('playlistName')?.value || '',
+                        mood: document.getElementById('playlistMood')?.value || '',
+                        songs: Array.from(document.querySelectorAll('#playlistItems .plan-item')).map(item => 
+                            item.querySelector('div').textContent
+                        )
+                    };
+                    break;
+                case 'gratitude':
+                    data = {
+                        frequency: document.getElementById('gratitudeFrequency')?.value || '',
+                        when: document.getElementById('gratitudeWhen')?.value || '',
+                        method: document.getElementById('gratitudeMethod')?.value || '',
+                        items: Array.from(document.querySelectorAll('#gratitudeItems .plan-item')).map(item => 
+                            item.querySelector('div').textContent
+                        )
+                    };
+                    break;
+                default:
+                    data = {
+                        title: document.getElementById('generalTitle')?.value || '',
+                        content: document.getElementById('generalContent')?.value || ''
+                    };
+            }
+
+            saveDayData(currentDay, activityIndex, activity.type, data);
+            showSaveMessage();
+        }
+
+        function showSaveMessage() {
+            const msg = document.getElementById('saveMessage');
+            if (msg) {
+                msg.classList.add('show');
+                setTimeout(() => msg.classList.remove('show'), 3000);
+            }
+        }
+
+        // Initialize on page load
+        initCalendar();
+    </script>
+</body>
+</html>
